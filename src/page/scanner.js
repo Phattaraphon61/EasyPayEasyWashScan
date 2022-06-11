@@ -1,12 +1,15 @@
 import React, { Component } from 'react'
 import QrReader from 'modern-react-qr-reader'
 import liff from '@line/liff';
+import Swal from 'sweetalert2'
+import {sendnoti} from '../api/api'
 export default class scanner extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            result: 'No result'
+            result: null,
+            userid: null
         }
 
         this.handleError = this.handleError.bind(this);
@@ -20,6 +23,26 @@ export default class scanner extends Component {
             this.state.result = data;
             console.log(this.state.result);
             this.setState({ result: data });
+            const datas = {
+                "type": "addnoti",
+                "washingid": data,
+                "lineid": this.state.userid
+            }
+            sendnoti(datas).then((res) => {
+                if (res.message == 'success') {
+                    Swal.fire(
+                        'เสร็จสิ้น',
+                        'กรุณารอรับการแจ้งเตือนเมื่อเสร็จ',
+                        'success'
+                    ).then((result) => {
+                        if (result.isConfirmed) {
+                            liff.closeWindow()
+                        } else {
+                            liff.closeWindow()
+                        }
+                    })
+                }
+            })
         }
     }
 
@@ -30,7 +53,7 @@ export default class scanner extends Component {
 
     componentDidMount() {
         this.initLine()
-      }
+    }
 
     initLine = () => {
         liff.init({ liffId: '1657208203-5zXOyVzQ' }, () => {
@@ -39,6 +62,7 @@ export default class scanner extends Component {
                 // setIdToken(idToken);
                 liff.getProfile().then(profile => {
                     console.log(profile);
+                    this.setState({ userid: profile.userId })
                     // setDisplayName(profile.displayName);
                     // setPictureUrl(profile.pictureUrl);
                     // setStatusMessage(profile.statusMessage);
@@ -65,14 +89,21 @@ export default class scanner extends Component {
     render() {
         return (
             <div>
-                <QrReader
+                {this.state.result == null ? <QrReader
                     delay={300}
                     facingMode={"environment"}
                     onError={this.handleError}
                     onScan={this.handleScan}
                     style={{ width: '100%' }}
-                />
-                <p>{this.state.result}</p>
+                /> : null}
+                {/* <QrReader
+                    delay={300}
+                    facingMode={"environment"}
+                    onError={this.handleError}
+                    onScan={this.handleScan}
+                    style={{ width: '100%' }}
+                /> */}
+                {/* <p>{this.state.result}</p> */}
             </div>
         )
     }
